@@ -12,7 +12,6 @@ interface StoryStoreState {
   playerState: PlayerState;
   errorMessage: string | null;
   choicePath: ChoiceLog[];
-  preloadedUrls: string[];
   sessionId: string | null;
   childId: string | null;
   completedSession: SessionRecord | null;
@@ -35,33 +34,12 @@ interface StoryStoreState {
   logoutParent: () => void;
 }
 
-/**
- * Helper to compute upcoming scene video URLs for preloading.
- */
-function getUpcomingVideoUrls(currentScene: Scene, allScenes: Scene[]): string[] {
-  const directNextIds = currentScene.choices
-    .map((c) => c.nextSceneId)
-    .filter((id): id is string => Boolean(id));
-
-  const secondTierIds = allScenes
-    .filter((s) => directNextIds.includes(s.sceneId))
-    .flatMap((s) => s.choices.map((c) => c.nextSceneId))
-    .filter((id): id is string => Boolean(id));
-
-  const allUpcomingIds = Array.from(new Set([...directNextIds, ...secondTierIds]));
-
-  return allUpcomingIds
-    .map((id) => allScenes.find((s) => s.sceneId === id)?.videoUrl)
-    .filter((url): url is string => Boolean(url));
-}
-
 export const useStoryStore = create<StoryStoreState>((set, get) => ({
   scenes: [],
   currentScene: null,
   playerState: "loading",
   errorMessage: null,
   choicePath: [],
-  preloadedUrls: [],
   sessionId: null,
   childId: null,
   completedSession: null,
@@ -72,44 +50,59 @@ export const useStoryStore = create<StoryStoreState>((set, get) => ({
   initStory: async () => {
     set({ playerState: "loading", errorMessage: null, choicePath: [], completedSession: null });
 
-    // 1. Create REST session on backend API
+    // 1. Create session
     const sessionMeta = await sessionStorageService.createSession();
 
-    // 2. Fetch scene graph from backend API
+    // 2. Fetch scene graph
     const allScenes = await sceneRepository.getAllScenes();
     const initialScene = await sceneRepository.getInitialScene();
-
-    const initialPreloads = initialScene ? getUpcomingVideoUrls(initialScene, allScenes) : [];
 
     set({
       scenes: allScenes,
       currentScene: initialScene,
       playerState: "playing",
-      preloadedUrls: initialPreloads,
       sessionId: sessionMeta.sessionId,
       childId: sessionMeta.childId,
     });
   },
 
   onVideoEnd: () => {
-    const { currentScene, playerState } = get();
+    const { currentScene, playerState, scenes, sessionId } = get();
     if (!currentScene) return;
 
-    // Handle end of scene logic
     if (playerState === "playing") {
-      // If scene has NO choices (e.g. finale_dusk_home), auto-transition to complete screen
-      if (currentScene.choices.length === 0 || currentScene.sceneId === "finale_dusk_home") {
-        const { sessionId } = get();
-        if (sessionId) {
-          sessionStorageService.getSessionResults(sessionId).then((record) => {
-            set({ playerState: "completed", completedSession: record });
-          });
+      // 1. Check if scene has autoNext field
+      if (currentScene.autoNext !== undefined) {
+        if (currentScene.autoNext !== null) {
+          // autoNext is present and not null -> transition IMMEDIATELY & automatically!
+          const nextScene = scenes.find((s) => s.sceneId === currentScene.autoNext);
+          if (nextScene) {
+            set({
+              currentScene: nextScene,
+              playerState: "playing",
+              errorMessage: null,
+            });
+          } else {
+            const errText = `[Story Engine Error] Missing autoNext scene ID "${currentScene.autoNext}" in scene "${currentScene.sceneId}".`;
+            console.error(errText);
+            set({ playerState: "error", errorMessage: errText });
+          }
         } else {
-          set({ playerState: "completed" });
+          // autoNext is null -> end of content reached ("more story coming soon")
+          if (sessionId) {
+            sessionStorageService.getSessionResults(sessionId).then((record) => {
+              set({ playerState: "completed", completedSession: record });
+            });
+          } else {
+            set({ playerState: "completed" });
+          }
         }
-      } else {
-        // Show choice buttons on video end
+      } else if (currentScene.choices && currentScene.choices.length > 0) {
+        // 2. choices array is present -> show choice buttons
         set({ playerState: "choice_pending" });
+      } else {
+        // 3. Fallback end of content
+        set({ playerState: "completed" });
       }
     }
   },
@@ -118,7 +111,6 @@ export const useStoryStore = create<StoryStoreState>((set, get) => ({
     const { currentScene, choicePath, scenes, sessionId } = get();
     if (!currentScene) return;
 
-    // 1. Record choice payload
     const choiceLog: ChoiceLog = {
       sceneId: currentScene.sceneId,
       choiceId: choice.choiceId,
@@ -130,40 +122,27 @@ export const useStoryStore = create<StoryStoreState>((set, get) => ({
 
     const newPath = [...choicePath, choiceLog];
 
-    // POST choice to backend API
     if (sessionId) {
       sessionStorageService.logChoice(sessionId, choiceLog);
     }
 
-    // 2. Look up ONLY that choice's nextSceneId in scene graph
     if (choice.nextSceneId) {
       const nextScene = scenes.find((s) => s.sceneId === choice.nextSceneId);
 
       if (!nextScene) {
-        // STRICT STORYLINE ENFORCEMENT: Stop playback and log clear console error!
-        const errText = `[Story Engine Error] Missing scene ID "${choice.nextSceneId}" referenced by choice "${choice.choiceId}" (${choice.label}) in scene "${currentScene.sceneId}". Story playback halted.`;
+        const errText = `[Story Engine Error] Missing scene ID "${choice.nextSceneId}" referenced by choice "${choice.choiceId}" (${choice.label}) in scene "${currentScene.sceneId}".`;
         console.error(errText);
-
-        set({
-          choicePath: newPath,
-          playerState: "error",
-          errorMessage: errText,
-        });
+        set({ choicePath: newPath, playerState: "error", errorMessage: errText });
         return;
       }
-
-      // Transition strictly to nextScene
-      const nextPreloads = getUpcomingVideoUrls(nextScene, scenes);
 
       set({
         currentScene: nextScene,
         choicePath: newPath,
         playerState: "playing",
-        preloadedUrls: Array.from(new Set([...get().preloadedUrls, ...nextPreloads])),
         errorMessage: null,
       });
     } else {
-      // 3. nextSceneId is null -> transition to session complete screen
       let record: SessionRecord | null = null;
       if (sessionId) {
         record = await sessionStorageService.getSessionResults(sessionId);

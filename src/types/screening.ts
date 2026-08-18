@@ -80,16 +80,19 @@ export type Choice = {
   detailText?: string;
 };
 
-export type CharacterMood = "happy" | "curious" | "anxious" | "sad" | "angry" | "determined" | "excited";
+export type SceneVideoUrl = {
+  lg: string;
+  sm: string;
+};
 
 export type Scene = {
   sceneId: string;
-  domain: DomainKey;
-  title: string;
-  description: string;
-  videoUrl: string;
-  characterMood: CharacterMood;
-  choices: Choice[];
+  videoUrl: SceneVideoUrl | string;
+  choices?: Choice[];
+  autoNext?: string | null;
+  title?: string;
+  description?: string;
+  domain?: DomainKey;
 };
 
 export type ChoiceLog = {
@@ -122,8 +125,8 @@ export type SessionRecord = {
 };
 
 export function getBandForScore(percentage: number): DomainBand {
-  if (percentage < 40) return "typical";
-  if (percentage < 70) return "worth_watching";
+  if (percentage <= 33) return "typical";
+  if (percentage <= 66) return "worth_watching";
   return "talk_to_professional";
 }
 

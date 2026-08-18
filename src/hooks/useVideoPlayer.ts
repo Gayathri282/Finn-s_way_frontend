@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import type { Scene } from "../types/screening";
-import { resolveSceneVideoUrl, getDeviceCategory } from "../utils/videoResolver";
+import { getVideoUrlForScene, getDeviceCategory } from "../utils/videoResolver";
 import type { VideoDeviceCategory } from "../utils/videoResolver";
 
 interface UseVideoPlayerOptions {
@@ -11,11 +11,9 @@ interface UseVideoPlayerOptions {
 export function useVideoPlayer({ currentScene, onVideoEnd }: UseVideoPlayerOptions) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
-  const [activeVariant, setActiveVariant] = useState<string | null>(null);
-  const [videoError, setVideoError] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPausedByChild, setIsPausedByChild] = useState(false);
-  const [isCheckingVideo, setIsCheckingVideo] = useState(true);
+  const [isReadyToPlay, setIsReadyToPlay] = useState(false);
 
   // Saved playback position for breakpoint src switching
   const pendingSeekRef = useRef<number | null>(null);
@@ -26,20 +24,15 @@ export function useVideoPlayer({ currentScene, onVideoEnd }: UseVideoPlayerOptio
     typeof window !== "undefined" ? window.innerWidth : 1024
   );
 
-  // 1. Resolve video URL for current scene and viewport width
-  const checkAndResolveVideo = useCallback(
-    async (sceneId: string, baseVideoUrl: string, width: number, preservePosition: boolean = false) => {
-      setIsCheckingVideo(true);
-
-      // Capture position if preserving across resize
+  // 1. Resolve active video URL for current scene and viewport width
+  const updateVideoUrl = useCallback(
+    (scene: Scene, width: number, preservePosition: boolean = false) => {
       if (preservePosition && videoRef.current) {
         const currentTime = videoRef.current.currentTime;
         const duration = videoRef.current.duration;
         const wasPlaying = !videoRef.current.paused && !videoRef.current.ended;
 
         if (duration > 0 && duration - currentTime < 0.5) {
-          // Near end of video: don't seek past end, just trigger end
-          setIsCheckingVideo(false);
           onVideoEnd();
           return;
         }
@@ -51,23 +44,11 @@ export function useVideoPlayer({ currentScene, onVideoEnd }: UseVideoPlayerOptio
         pendingResumeRef.current = true;
       }
 
-      const resolved = await resolveSceneVideoUrl(sceneId, baseVideoUrl, width);
-
-      if (resolved) {
-        if (resolved.url !== activeVideoUrl) {
-          setActiveVideoUrl(resolved.url);
-          setActiveVariant(resolved.variant);
-        }
-        setVideoError(false);
-      } else {
-        setActiveVideoUrl(null);
-        setActiveVariant(null);
-        setVideoError(true);
-      }
-
-      setIsCheckingVideo(false);
+      const newUrl = getVideoUrlForScene(scene, width);
+      setIsReadyToPlay(false);
+      setActiveVideoUrl(newUrl);
     },
-    [activeVideoUrl, onVideoEnd]
+    [onVideoEnd]
   );
 
   // 2. Initial resolution when currentScene changes
@@ -75,10 +56,11 @@ export function useVideoPlayer({ currentScene, onVideoEnd }: UseVideoPlayerOptio
     if (!currentScene) return;
     setIsPlaying(false);
     setIsPausedByChild(false);
+    setIsReadyToPlay(false);
     pendingSeekRef.current = null;
     pendingResumeRef.current = true;
-    checkAndResolveVideo(currentScene.sceneId, currentScene.videoUrl, viewportWidth, false);
-  }, [currentScene?.sceneId, currentScene?.videoUrl]);
+    updateVideoUrl(currentScene, viewportWidth, false);
+  }, [currentScene?.sceneId, updateVideoUrl]);
 
   // 3. Debounced 200ms resize listener across 768px breakpoint boundary
   useEffect(() => {
@@ -94,10 +76,8 @@ export function useVideoPlayer({ currentScene, onVideoEnd }: UseVideoPlayerOptio
 
         setViewportWidth(newWidth);
 
-        // Only switch video source if viewport crosses the 768px breakpoint
         if (oldBreakpoint !== newBreakpoint && currentScene) {
-          console.log(`Viewport crossed 768px boundary (${newWidth}px). Switching video variant with time preservation.`);
-          checkAndResolveVideo(currentScene.sceneId, currentScene.videoUrl, newWidth, true);
+          updateVideoUrl(currentScene, newWidth, true);
         }
       }, 200);
     };
@@ -107,16 +87,17 @@ export function useVideoPlayer({ currentScene, onVideoEnd }: UseVideoPlayerOptio
       window.removeEventListener("resize", handleResize);
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [viewportWidth, currentScene, checkAndResolveVideo]);
+  }, [viewportWidth, currentScene, updateVideoUrl]);
 
-  // 4. Restore currentTime on loadedmetadata event when src changes
-  const handleLoadedMetadata = () => {
+  // 4. Video ready event handler (onCanPlay / onCanPlayThrough / onLoadedData)
+  const handleCanPlay = () => {
     if (videoRef.current) {
       if (pendingSeekRef.current !== null && pendingSeekRef.current > 0) {
-        const seekTarget = pendingSeekRef.current;
-        videoRef.current.currentTime = seekTarget;
+        videoRef.current.currentTime = pendingSeekRef.current;
         pendingSeekRef.current = null;
       }
+
+      setIsReadyToPlay(true);
 
       if (pendingResumeRef.current && !isPausedByChild) {
         videoRef.current
@@ -157,25 +138,17 @@ export function useVideoPlayer({ currentScene, onVideoEnd }: UseVideoPlayerOptio
     onVideoEnd();
   };
 
-  const handleNativeError = () => {
-    console.warn(`Video playback error for ${activeVideoUrl}. Falling back to visual canvas.`);
-    setVideoError(true);
-  };
-
   const currentCategory: VideoDeviceCategory = getDeviceCategory(viewportWidth);
 
   return {
     videoRef,
     activeVideoUrl,
-    activeVariant,
-    videoError,
     isPlaying,
     isPausedByChild,
-    isCheckingVideo,
+    isReadyToPlay,
     currentCategory,
-    handleLoadedMetadata,
+    handleCanPlay,
     handleNativeEnded,
-    handleNativeError,
     togglePlayPause,
   };
 }

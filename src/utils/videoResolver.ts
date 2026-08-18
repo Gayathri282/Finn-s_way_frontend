@@ -1,3 +1,5 @@
+import type { Scene } from "../types/screening";
+
 export const videoFileMap: Record<string, { lg: string; sm: string }> = {
   dep_01_wake: {
     lg: "/videos/first_scene_laptop.mp4",
@@ -31,63 +33,24 @@ export function getDeviceCategory(width: number = typeof window !== "undefined" 
   return width >= 768 ? "laptop" : "mobile";
 }
 
-export interface ResolvedVideoAsset {
-  url: string;
-  variant: "lg" | "sm" | "fallback";
-  sceneId: string;
-}
-
 /**
- * Strict Video Resolver:
- * 1. Checks videoFileMap[sceneId] for an explicit entry.
- * 2. If present, selects lg (>=768px) or sm (<768px) variant based on viewport width.
- * 3. Probes file via HEAD fetch. If file exists, returns resolved asset.
- * 4. If no entry in videoFileMap exists for sceneId, returns null (triggering placeholder div).
- * 5. Does NOT guess or substitute arbitrary filename patterns.
+ * Gets the video URL for a scene based on viewport width.
+ * Prioritizes the scene object's videoUrl property if available.
  */
-export async function resolveSceneVideoUrl(
-  sceneId: string,
-  _baseVideoUrl?: string,
+export function getVideoUrlForScene(
+  scene: Scene,
   viewportWidth: number = typeof window !== "undefined" ? window.innerWidth : 1024
-): Promise<ResolvedVideoAsset | null> {
-  const mapEntry = videoFileMap[sceneId];
-  if (!mapEntry) {
-    // Any sceneId not explicitly listed in videoFileMap has no real video yet -> fall back to placeholder
-    return null;
-  }
-
+): string {
   const isDesktop = viewportWidth >= 768;
-  const preferredUrl = isDesktop ? mapEntry.lg : mapEntry.sm;
-  const alternateUrl = isDesktop ? mapEntry.sm : mapEntry.lg;
 
-  // 1. Check preferred variant (lg for desktop/tablet, sm for mobile)
-  try {
-    const resPref = await fetch(preferredUrl, { method: "HEAD" });
-    if (resPref.ok) {
-      return {
-        url: preferredUrl,
-        variant: isDesktop ? "lg" : "sm",
-        sceneId,
-      };
-    }
-  } catch {
-    // Ignore fetch error
+  if (typeof scene.videoUrl === "object" && scene.videoUrl !== null) {
+    return isDesktop ? scene.videoUrl.lg : scene.videoUrl.sm;
   }
 
-  // 2. Fall back to alternate variant if preferred file is missing
-  try {
-    const resAlt = await fetch(alternateUrl, { method: "HEAD" });
-    if (resAlt.ok) {
-      return {
-        url: alternateUrl,
-        variant: isDesktop ? "sm" : "lg",
-        sceneId,
-      };
-    }
-  } catch {
-    // Ignore fetch error
+  const mapEntry = videoFileMap[scene.sceneId];
+  if (mapEntry) {
+    return isDesktop ? mapEntry.lg : mapEntry.sm;
   }
 
-  // Neither variant exists on disk -> return null for placeholder div
-  return null;
+  return typeof scene.videoUrl === "string" ? scene.videoUrl : "";
 }
