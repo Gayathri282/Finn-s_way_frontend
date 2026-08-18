@@ -7,7 +7,7 @@ import { PathReplay } from "./PathReplay";
 import { SessionHistory } from "./SessionHistory";
 import { sessionStorageService } from "../../services/sessionStorage";
 import type { SessionRecord } from "../../types/screening";
-import { ArrowLeft, ShieldCheck, FileDown, Settings, Database } from "lucide-react";
+import { ArrowLeft, FileDown, Settings, Database } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
@@ -72,9 +72,9 @@ export const ClinicianDashboard: React.FC = () => {
             <span>Return to Story</span>
           </Link>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              <img src="/favicon.svg" alt="Finn's Way Logo" className="w-9 h-9 rounded-xl shadow-md border border-amber-400/30" />
               <h1 className="text-2xl font-black text-white flex items-center gap-2">
-                <ShieldCheck className="w-7 h-7 text-emerald-400" />
                 <span>{isAdmin ? "System Admin Console" : "Parent & Clinician Dashboard"}</span>
               </h1>
               <span className={`px-3 py-0.5 rounded-full text-xs font-black uppercase tracking-wider border ${
@@ -175,7 +175,7 @@ export const ClinicianDashboard: React.FC = () => {
           </>
         ) : (
           <div className="w-full p-12 bg-slate-900/60 border border-slate-800 rounded-3xl text-center flex flex-col items-center justify-center gap-4">
-            <div className="text-4xl">🦊</div>
+            <img src="/favicon.svg" alt="Finn's Way" className="w-16 h-16 rounded-2xl shadow-lg border border-amber-400/30" />
             <h3 className="text-xl font-bold text-white">No Active Session Records</h3>
             <p className="text-sm text-slate-400 max-w-md">
               Ask your child to play through Finn's Way story experience. Once finished, screening domain results will populate here and you can download the PDF summary.

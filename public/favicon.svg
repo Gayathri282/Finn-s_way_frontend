@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="50%" stop-color="#064e3b"/>
+      <stop offset="100%" stop-color="#022c22"/>
+    </linearGradient>
+    <linearGradient id="foxGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="50%" stop-color="#f97316"/>
+      <stop offset="100%" stop-color="#ea580c"/>
+    </linearGradient>
+    <linearGradient id="innerEarGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="100%" stop-color="#fde047"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Rounded Square Container -->
+  <rect width="512" height="512" rx="128" fill="url(#bgGrad)" stroke="#f59e0b" stroke-width="16"/>
+  
+  <!-- Outer Fox Ears -->
+  <path d="M128 240 L160 100 L240 180 Z" fill="url(#foxGrad)" />
+  <path d="M384 240 L352 100 L272 180 Z" fill="url(#foxGrad)" />
+  
+  <!-- Inner Ear Highlights -->
+  <path d="M144 220 L168 128 L220 180 Z" fill="url(#innerEarGrad)" opacity="0.9" />
+  <path d="M368 220 L344 128 L292 180 Z" fill="url(#innerEarGrad)" opacity="0.9" />
+  
+  <!-- Main Fox Head Base -->
+  <path d="M120 220 C120 340, 210 420, 256 420 C302 420, 392 340, 392 220 C392 180, 340 180, 256 180 C172 180, 120 180, 120 220 Z" fill="url(#foxGrad)" />
+  
+  <!-- White Snout / Cheek Accents -->
+  <path d="M140 250 C180 330, 230 380, 256 380 C282 380, 332 330, 372 250 C320 290, 280 290, 256 290 C232 290, 192 290, 140 250 Z" fill="#ffffff" opacity="0.95" />
+  
+  <!-- Eyes -->
+  <ellipse cx="200" cy="240" rx="14" ry="20" fill="#0f172a" />
+  <ellipse cx="312" cy="240" rx="14" ry="20" fill="#0f172a" />
+  <circle cx="204" cy="234" r="5" fill="#ffffff" />
+  <circle cx="316" cy="234" r="5" fill="#ffffff" />
+  
+  <!-- Nose -->
+  <polygon points="256,310 240,290 272,290" fill="#0f172a" />
+  
+  <!-- Glowing Star Accent -->
+  <path d="M410 90 L416 110 L436 116 L416 122 L410 142 L404 122 L384 116 L404 110 Z" fill="#fef08a" />
+  <path d="M90 380 L94 394 L108 398 L94 402 L90 416 L86 402 L72 398 L86 394 Z" fill="#fef08a" />
+</svg>

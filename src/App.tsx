@@ -23,9 +23,9 @@ export const App: React.FC = () => {
             <div className="w-full flex-1 flex flex-col justify-between p-4 sm:p-6 max-w-7xl mx-auto">
               <main className="flex-1 flex items-center justify-center py-2">
                 {playerState === "loading" ? (
-                  <div className="flex flex-col items-center justify-center gap-4 text-amber-300">
-                    <div className="w-16 h-16 rounded-full border-4 border-amber-400 border-t-transparent animate-spin" />
-                    <span className="text-lg font-black tracking-wide">Loading Finn's Way Story World...</span>
+                  <div className="flex flex-col items-center justify-center gap-4 text-amber-300 animate-fade-in">
+                    <img src="/favicon.svg" alt="Finn's Way Logo" className="w-20 h-20 rounded-2xl shadow-2xl border-2 border-amber-400/40 animate-pulse" />
+                    <span className="text-sm font-extrabold tracking-widest uppercase text-emerald-300">Finn's Way Story World</span>
                   </div>
                 ) : playerState === "completed" ? (
                   <SessionCompleteScreen />
@@ -34,7 +34,7 @@ export const App: React.FC = () => {
                 )}
               </main>
 
-              {/* NON-NEGOTIABLE CLINICAL DISCLAIMER BANNER */}
+              {/* CLINICAL DISCLAIMER BANNER */}
               <footer className="mt-4">
                 <DisclaimerBanner />
               </footer>

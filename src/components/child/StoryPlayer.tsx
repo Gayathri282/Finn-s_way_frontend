@@ -56,20 +56,12 @@ export const StoryPlayer: React.FC = () => {
 
   return (
     <div className="relative w-full h-[calc(100vh-80px)] min-h-[580px] max-w-7xl mx-auto rounded-3xl overflow-hidden bg-slate-950 shadow-2xl border-4 border-amber-300/40 flex flex-col justify-center select-none">
-      {/* 1. Branded Loading Screen (Shown while video buffers; NO text description or JSON ever rendered) */}
+      {/* 1. Minimal Solid Background Transition State (No spinner, no icon, no text overlay) */}
       {!isReadyToPlay && (
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-950 text-amber-300 gap-4">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-amber-400 to-orange-500 flex items-center justify-center shadow-2xl text-4xl animate-bounce-subtle border-2 border-amber-200">
-            🦊
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="w-6 h-6 rounded-full border-3 border-amber-400 border-t-transparent animate-spin" />
-            <span className="text-sm font-black tracking-widest uppercase text-amber-200">Loading Scene...</span>
-          </div>
-        </div>
+        <div className="absolute inset-0 z-20 bg-slate-950 transition-opacity duration-300 pointer-events-none" />
       )}
 
-      {/* 2. Real Video Player Element */}
+      {/* 2. Pure Video Player Element */}
       {activeVideoUrl && (
         <div className="relative w-full h-full flex items-center justify-center bg-black">
           <video

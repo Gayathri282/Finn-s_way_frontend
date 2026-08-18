@@ -363,8 +363,9 @@ export const SessionCompleteScreen: React.FC = () => {
         /* 3. Initial Child End-of-Content Screen */
         <div className="w-full min-h-[520px] rounded-3xl bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-950 p-8 sm:p-12 text-white shadow-2xl border-2 border-amber-300/30 flex flex-col items-center justify-center text-center select-none overflow-hidden animate-fade-in">
           <div className="relative z-10 max-w-xl mx-auto bg-slate-900/80 backdrop-blur-xl p-8 sm:p-10 rounded-3xl border border-white/15 shadow-2xl flex flex-col items-center gap-6">
-            <div className="w-28 h-28 rounded-full bg-gradient-to-tr from-amber-400 via-orange-500 to-amber-300 flex items-center justify-center shadow-2xl border-4 border-amber-200/80 text-6xl transform hover:scale-105 transition-transform">
-              🦊
+            {/* Brand Logo Avatar */}
+            <div className="w-28 h-28 rounded-3xl bg-slate-900 flex items-center justify-center shadow-2xl border-4 border-amber-300/50 p-2 transform hover:scale-105 transition-transform">
+              <img src="/favicon.svg" alt="Finn's Way Logo" className="w-full h-full rounded-2xl object-contain" />
             </div>
 
             <div>
