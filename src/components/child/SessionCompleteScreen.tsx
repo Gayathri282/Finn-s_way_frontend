@@ -180,7 +180,7 @@ export const SessionCompleteScreen: React.FC = () => {
               </button>
             </div>
 
-            {/* Render Domain Bands */}
+            {/* Render Domain Bands with High Contrast Dark Titles */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
               {activeDomainKeys.map((key) => {
                 const meta = DOMAIN_DEFINITIONS[key];
@@ -201,7 +201,7 @@ export const SessionCompleteScreen: React.FC = () => {
                   >
                     <div>
                       <div className="flex items-center justify-between gap-2 mb-2">
-                        <span className="font-extrabold text-base text-slate-900 dark:text-white">
+                        <span className="font-black text-base text-slate-950">
                           {meta?.label || key}
                         </span>
                         <span className={`px-3 py-1 rounded-full text-xs font-black border ${bandDetails.badgeColor}`}>
@@ -209,19 +209,19 @@ export const SessionCompleteScreen: React.FC = () => {
                         </span>
                       </div>
 
-                      <p className="text-xs text-slate-600 dark:text-slate-300 font-medium mb-3">
+                      <p className="text-xs text-slate-700 font-bold mb-3">
                         {meta?.shortDescription}
                       </p>
 
-                      <p className="text-xs text-slate-800 dark:text-slate-200 font-semibold bg-white/70 dark:bg-black/40 p-3 rounded-xl border border-black/5 leading-relaxed">
+                      <p className="text-xs text-slate-950 font-bold bg-white/80 p-3 rounded-xl border border-black/10 leading-relaxed shadow-sm">
                         💡 {scoreObj.recommendation}
                       </p>
                     </div>
 
                     {showClinicianDetails && (
-                      <div className="mt-3 pt-2 border-t border-black/10 dark:border-white/10 flex justify-between items-center text-xs font-mono text-slate-600 dark:text-slate-400">
+                      <div className="mt-3 pt-2 border-t border-black/15 flex justify-between items-center text-xs font-mono text-slate-800 font-bold">
                         <span>Raw Weight: {scoreObj.rawScore} / {scoreObj.maxScore}</span>
-                        <span className="font-bold text-emerald-400">{scoreObj.normalizedPercentage}% Normalized</span>
+                        <span className="font-black text-emerald-800">{scoreObj.normalizedPercentage}% Normalized</span>
                       </div>
                     )}
                   </div>
@@ -291,7 +291,9 @@ export const SessionCompleteScreen: React.FC = () => {
 
           {/* Warm End-of-Content Message at Bottom */}
           <div className="bg-gradient-to-r from-amber-500/15 to-orange-500/15 border-2 border-amber-500/30 rounded-3xl p-6 text-center flex flex-col items-center gap-2">
-            <div className="text-3xl">🦊</div>
+            <div className="w-12 h-12 rounded-xl bg-slate-900 p-1 border border-amber-400/40 shadow-md">
+              <img src="/favicon.svg" alt="Finn's Way Logo" className="w-full h-full object-contain" />
+            </div>
             <h4 className="text-lg font-black text-amber-300">More of Finn's Story Coming Soon!</h4>
             <p className="text-xs text-slate-300 max-w-md font-medium">
               Thank you for exploring the Whispering Woods with Finn today. Additional story chapters and clinical screening domains will unlock in future updates!

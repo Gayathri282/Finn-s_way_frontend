@@ -62,7 +62,7 @@ export const DomainChart: React.FC<DomainChartProps> = ({ domainScores }) => {
             <div className="flex items-center justify-between">
               <span className="font-extrabold text-emerald-300">Typical</span>
               <span className="text-xs bg-emerald-500/20 text-emerald-300 font-bold px-2 py-0.5 rounded-full">
-                0 – 39%
+                0 – 33%
               </span>
             </div>
             <p className="text-xs text-slate-300 font-medium leading-normal mt-1">
@@ -74,7 +74,7 @@ export const DomainChart: React.FC<DomainChartProps> = ({ domainScores }) => {
             <div className="flex items-center justify-between">
               <span className="font-extrabold text-amber-300">Worth Watching</span>
               <span className="text-xs bg-amber-500/20 text-amber-300 font-bold px-2 py-0.5 rounded-full">
-                40 – 69%
+                34 – 66%
               </span>
             </div>
             <p className="text-xs text-slate-300 font-medium leading-normal mt-1">
@@ -86,7 +86,7 @@ export const DomainChart: React.FC<DomainChartProps> = ({ domainScores }) => {
             <div className="flex items-center justify-between">
               <span className="font-extrabold text-rose-300">Talk to a Professional</span>
               <span className="text-xs bg-rose-500/20 text-rose-300 font-bold px-2 py-0.5 rounded-full">
-                70 – 100%
+                67 – 100%
               </span>
             </div>
             <p className="text-xs text-slate-300 font-medium leading-normal mt-1">
@@ -127,46 +127,22 @@ export const DomainChart: React.FC<DomainChartProps> = ({ domainScores }) => {
                 angle={-15}
                 textAnchor="end"
               />
-              <YAxis
-                stroke="#94a3b8"
-                fontSize={11}
-                domain={[0, 100]}
-                ticks={[0, 40, 70, 100]}
-                tickFormatter={(val) => {
-                  if (val === 40) return "Watching";
-                  if (val === 70) return "Consult";
-                  if (val === 0) return "Typical";
-                  return `${val}%`;
-                }}
-              />
+              <YAxis stroke="#94a3b8" fontSize={11} domain={[0, 100]} tickCount={6} />
               <Tooltip
-                content={({ active, payload }) => {
-                  if (active && payload && payload.length) {
-                    const data = payload[0].payload;
-                    const bandInfo = getBandDetails(data.band);
-                    return (
-                      <div className="bg-slate-950 border-2 border-amber-400 p-4 rounded-2xl shadow-2xl text-white max-w-xs">
-                        <p className="font-black text-amber-300 text-sm">{data.name}</p>
-                        <div className="mt-2 flex items-center gap-2">
-                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${bandInfo.badgeColor}`}>
-                            {bandInfo.label}
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-300 mt-2">{bandInfo.description}</p>
-
-                        {showClinicianDetails && (
-                          <div className="mt-3 pt-2 border-t border-slate-800 text-xs font-mono text-emerald-400">
-                            Raw Score: {data.rawScore} / {data.maxScore} ({data.percentage}%)
-                          </div>
-                        )}
-                      </div>
-                    );
-                  }
-                  return null;
+                contentStyle={{
+                  backgroundColor: "#0f172a",
+                  borderColor: "#334155",
+                  borderRadius: "1rem",
+                  color: "#fff",
                 }}
+                formatter={(value: number, _name: string, props: any) => [
+                  `${value}% (${props.payload.bandLabel})`,
+                  props.payload.name,
+                ]}
               />
-              <ReferenceLine y={40} stroke="#f59e0b" strokeDasharray="4 4" label={{ value: "Worth Watching", fill: "#f59e0b", fontSize: 10, position: "insideTopRight" }} />
-              <ReferenceLine y={70} stroke="#ef4444" strokeDasharray="4 4" label={{ value: "Talk to Professional", fill: "#ef4444", fontSize: 10, position: "insideTopRight" }} />
+
+              <ReferenceLine y={33} stroke="#10b981" strokeDasharray="3 3" />
+              <ReferenceLine y={66} stroke="#f59e0b" strokeDasharray="3 3" />
 
               <Bar dataKey="percentage" radius={[8, 8, 0, 0]}>
                 {chartData.map((entry) => {
@@ -222,7 +198,7 @@ export const DomainChart: React.FC<DomainChartProps> = ({ domainScores }) => {
             >
               <div>
                 <div className="flex items-center justify-between gap-2 mb-3">
-                  <span className="font-extrabold text-base text-slate-900 dark:text-white">
+                  <span className="font-black text-base text-slate-950">
                     {meta.label}
                   </span>
                   <span className={`px-3 py-1 rounded-full text-xs font-black border ${bandDetails.badgeColor}`}>
@@ -230,19 +206,19 @@ export const DomainChart: React.FC<DomainChartProps> = ({ domainScores }) => {
                   </span>
                 </div>
 
-                <p className="text-xs text-slate-600 dark:text-slate-300 font-medium mb-3">
+                <p className="text-xs text-slate-700 font-bold mb-3">
                   {meta.shortDescription}
                 </p>
 
-                <p className="text-xs text-slate-800 dark:text-slate-200 font-semibold bg-white/60 dark:bg-black/30 p-3 rounded-xl border border-black/5 leading-relaxed">
+                <p className="text-xs text-slate-950 font-bold bg-white/80 p-3 rounded-xl border border-black/10 leading-relaxed shadow-sm">
                   💡 {scoreObj.recommendation}
                 </p>
               </div>
 
               {showClinicianDetails && (
-                <div className="mt-4 pt-3 border-t border-black/10 dark:border-white/10 flex justify-between items-center text-xs font-mono text-slate-600 dark:text-slate-400">
+                <div className="mt-4 pt-3 border-t border-black/15 flex justify-between items-center text-xs font-mono text-slate-800 font-bold">
                   <span>Raw Weight Accumulation:</span>
-                  <span className="font-bold text-slate-900 dark:text-white">{scoreObj.rawScore} points</span>
+                  <span className="font-black text-slate-950">{scoreObj.rawScore} points</span>
                 </div>
               )}
             </div>
