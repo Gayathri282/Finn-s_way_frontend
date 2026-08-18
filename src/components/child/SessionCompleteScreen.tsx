@@ -31,6 +31,7 @@ export const SessionCompleteScreen: React.FC = () => {
   const [pinInput, setPinInput] = useState("1234");
   const [authError, setAuthError] = useState(false);
   const [showClinicianDetails, setShowClinicianDetails] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
   useEffect(() => {
     if (userRole === "parent" || userRole === "admin") {
@@ -49,15 +50,44 @@ export const SessionCompleteScreen: React.FC = () => {
     })();
   }, []);
 
-  const handleDownloadPdf = () => {
-    if (!sessionId) return;
+  const handleDownloadPdf = async () => {
+    if (!sessionId) {
+      alert("No active session ID found. Please start a new story.");
+      return;
+    }
+
     const pdfUrl = `${API_BASE_URL.replace(/\/$/, "")}/sessions/${sessionId}/report.pdf`;
-    const link = document.createElement("a");
-    link.href = pdfUrl;
-    link.setAttribute("download", `${childId || "Finn-Explorer"}_screening_summary.pdf`);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
+    console.log(`[Frontend PDF Request] Fetching PDF report for Session ID: "${sessionId}" from ${pdfUrl}`);
+    setIsDownloadingPdf(true);
+
+    try {
+      const response = await fetch(pdfUrl);
+      if (response.ok) {
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = downloadUrl;
+        link.setAttribute("download", `${childId || "Finn-Explorer"}_screening_summary.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(downloadUrl);
+      } else {
+        let errMessage = "This session has expired or the server restarted. Please complete the story again to generate a new report.";
+        try {
+          const errData = await response.json();
+          if (errData.error) errMessage = errData.error;
+        } catch {
+          // ignore parsing error
+        }
+        alert(errMessage);
+      }
+    } catch (err) {
+      console.error("[Frontend PDF Request Error]", err);
+      alert("Unable to connect to Finn's Way backend server to download PDF report.");
+    } finally {
+      setIsDownloadingPdf(false);
+    }
   };
 
   const handleParentAuthSubmit = (e: React.FormEvent) => {
@@ -83,7 +113,7 @@ export const SessionCompleteScreen: React.FC = () => {
     }
   };
 
-  // FIX: Identify domains that had at least one LOGGED CHOICE (regardless of scoreWeight being 0 or positive)
+  // Identify domains that had at least one LOGGED CHOICE
   const activeDomainKeys = Array.from(
     new Set(completedSession?.path.map((c) => c.domain))
   ).filter((d): d is DomainKey => Boolean(d));
@@ -101,17 +131,18 @@ export const SessionCompleteScreen: React.FC = () => {
               </span>
               <h2 className="text-2xl font-black text-white">Screening Observation Results</h2>
               <p className="text-xs text-slate-400 font-medium">
-                Child ID: <strong className="text-emerald-400">{completedSession.childId}</strong> | Logged Choices: {completedSession.totalChoicesMade}
+                Child ID: <strong className="text-emerald-400">{completedSession.childId}</strong> | Session ID: <span className="font-mono text-amber-300">{sessionId}</span>
               </p>
             </div>
 
             <div className="flex items-center gap-3 self-end sm:self-auto">
               <button
                 onClick={handleDownloadPdf}
-                className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl shadow-lg transition cursor-pointer"
+                disabled={isDownloadingPdf}
+                className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl shadow-lg transition cursor-pointer disabled:opacity-50"
               >
                 <FileDown className="w-4 h-4" />
-                <span>Download PDF Report</span>
+                <span>{isDownloadingPdf ? "Downloading..." : "Download PDF Report"}</span>
               </button>
 
               <button
@@ -149,7 +180,7 @@ export const SessionCompleteScreen: React.FC = () => {
               </button>
             </div>
 
-            {/* Render Domain Bands (Strictly checking if domain had logged choices, regardless of score being 0) */}
+            {/* Render Domain Bands */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
               {activeDomainKeys.map((key) => {
                 const meta = DOMAIN_DEFINITIONS[key];
@@ -329,7 +360,7 @@ export const SessionCompleteScreen: React.FC = () => {
           </button>
         </div>
       ) : (
-        /* 3. Initial Child End-of-Content Screen (No Domain Scores Visible) */
+        /* 3. Initial Child End-of-Content Screen */
         <div className="w-full min-h-[520px] rounded-3xl bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-950 p-8 sm:p-12 text-white shadow-2xl border-2 border-amber-300/30 flex flex-col items-center justify-center text-center select-none overflow-hidden animate-fade-in">
           <div className="relative z-10 max-w-xl mx-auto bg-slate-900/80 backdrop-blur-xl p-8 sm:p-10 rounded-3xl border border-white/15 shadow-2xl flex flex-col items-center gap-6">
             <div className="w-28 h-28 rounded-full bg-gradient-to-tr from-amber-400 via-orange-500 to-amber-300 flex items-center justify-center shadow-2xl border-4 border-amber-200/80 text-6xl transform hover:scale-105 transition-transform">

@@ -1,7 +1,5 @@
 import type {
   ChoiceLog,
-  DomainKey,
-  DomainScoreResult,
   SessionRecord,
 } from "../types/screening";
 
@@ -15,41 +13,7 @@ export interface ISessionStorageService {
   clearSessions(): Promise<void>;
 }
 
-function getBandForPercentage(percentage: number) {
-  if (percentage <= 33) return "typical" as const;
-  if (percentage <= 66) return "worth_watching" as const;
-  return "talk_to_professional" as const;
-}
-
-function computeDomainResult(rawScore: number, maxScore: number = 6): DomainScoreResult {
-  const rawPercentage = Math.round((rawScore / maxScore) * 100);
-  const normalizedPercentage = Math.min(100, Math.max(0, rawPercentage));
-  const band = getBandForPercentage(normalizedPercentage);
-
-  let bandLabel = "Typical";
-  let recommendation = "Behaviors fall within typical developmental expectations.";
-
-  if (band === "worth_watching") {
-    bandLabel = "Worth Watching";
-    recommendation = "Mild indicators noted. Observe behaviors during routine activities.";
-  } else if (band === "talk_to_professional") {
-    bandLabel = "Talk to a Professional";
-    recommendation = "Elevated indicators observed. Consider consulting a pediatric health professional.";
-  }
-
-  return {
-    rawScore,
-    maxScore,
-    normalizedPercentage,
-    band,
-    bandLabel,
-    recommendation,
-  };
-}
-
 class ApiSessionStorageService implements ISessionStorageService {
-  private localSessions = new Map<string, SessionRecord>();
-
   private getEndpoint(path: string): string {
     const base = API_BASE_URL.replace(/\/$/, "");
     const cleanPath = path.replace(/^\//, "");
@@ -57,119 +21,78 @@ class ApiSessionStorageService implements ISessionStorageService {
   }
 
   async createSession(): Promise<{ sessionId: string; childId: string }> {
+    const endpoint = this.getEndpoint("/sessions");
     try {
-      const response = await fetch(this.getEndpoint("/sessions"), { method: "POST" });
+      const response = await fetch(endpoint, { method: "POST" });
       if (response.ok) {
         const data = await response.json();
+        console.log(`[Frontend SessionStorage] Session successfully created on backend API: "${data.sessionId}" (Child ID: ${data.childId})`);
         return { sessionId: data.sessionId, childId: data.childId };
+      } else {
+        const errText = await response.text();
+        throw new Error(`Backend API returned error ${response.status}: ${errText}`);
       }
-    } catch {
-      // Fallback
+    } catch (err) {
+      console.error(`[Frontend SessionStorage Error] Failed to create session on backend API (${endpoint}):`, err);
+      throw err;
     }
-
-    const sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    const childId = `Finn-Explorer-${Math.floor(1000 + Math.random() * 9000)}`;
-    const record: SessionRecord = {
-      sessionId,
-      childId,
-      completedAt: null,
-      domainScores: null,
-      path: [],
-      totalChoicesMade: 0,
-    };
-    this.localSessions.set(sessionId, record);
-    return { sessionId, childId };
   }
 
   async logChoice(sessionId: string, choiceLog: ChoiceLog): Promise<void> {
+    const endpoint = this.getEndpoint(`/sessions/${sessionId}/choice`);
+    console.log(`[Frontend SessionStorage] Logging choice for Session ID "${sessionId}" -> Scene "${choiceLog.sceneId}", Choice "${choiceLog.choiceId}"`);
     try {
-      const response = await fetch(this.getEndpoint(`/sessions/${sessionId}/choice`), {
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(choiceLog),
       });
-      if (response.ok) return;
-    } catch {
-      // Fallback
-    }
-
-    let record = this.localSessions.get(sessionId);
-    if (!record) {
-      record = {
-        sessionId,
-        childId: `Finn-Explorer-${Math.floor(1000 + Math.random() * 9000)}`,
-        completedAt: null,
-        domainScores: null,
-        path: [],
-        totalChoicesMade: 0,
-      };
-      this.localSessions.set(sessionId, record);
-    }
-
-    const exists = record.path.some((c) => c.sceneId === choiceLog.sceneId && c.choiceId === choiceLog.choiceId);
-    if (!exists) {
-      record.path.push(choiceLog);
-      record.totalChoicesMade = record.path.length;
+      if (!response.ok) {
+        console.warn(`[Frontend SessionStorage Warning] Choice log returned status ${response.status}`);
+      }
+    } catch (err) {
+      console.error(`[Frontend SessionStorage Error] Failed to log choice for session "${sessionId}":`, err);
     }
   }
 
   async getSessionResults(sessionId: string): Promise<SessionRecord | null> {
+    const endpoint = this.getEndpoint(`/sessions/${sessionId}/results`);
+    console.log(`[Frontend SessionStorage] Fetching results for Session ID "${sessionId}" from API`);
     try {
-      const response = await fetch(this.getEndpoint(`/sessions/${sessionId}/results`));
+      const response = await fetch(endpoint);
       if (response.ok) {
-        return await response.json();
+        const record = await response.json();
+        console.log(`[Frontend SessionStorage] Retrieved results for Session ID "${sessionId}":`, record);
+        return record;
+      } else {
+        console.warn(`[Frontend SessionStorage Warning] getSessionResults returned status ${response.status}`);
       }
-    } catch {
-      // Fallback
+    } catch (err) {
+      console.error(`[Frontend SessionStorage Error] Failed to fetch results for session "${sessionId}":`, err);
     }
-
-    const record = this.localSessions.get(sessionId);
-    if (!record) return null;
-
-    const choicesByDomain: Record<string, ChoiceLog[]> = {};
-    record.path.forEach((choice) => {
-      if (!choicesByDomain[choice.domain]) {
-        choicesByDomain[choice.domain] = [];
-      }
-      choicesByDomain[choice.domain].push(choice);
-    });
-
-    const domainScores: Partial<Record<DomainKey, DomainScoreResult>> = {};
-    Object.keys(choicesByDomain).forEach((dKey) => {
-      const choicesList = choicesByDomain[dKey];
-      if (choicesList && choicesList.length > 0) {
-        const rawScore = choicesList.reduce((sum, c) => sum + Number(c.scoreWeight || 0), 0);
-        domainScores[dKey as DomainKey] = computeDomainResult(rawScore, 6);
-      }
-    });
-
-    record.domainScores = domainScores as Record<DomainKey, DomainScoreResult>;
-    if (!record.completedAt) {
-      record.completedAt = new Date().toISOString();
-    }
-
-    return record;
+    return null;
   }
 
   async getSessions(): Promise<SessionRecord[]> {
+    const endpoint = this.getEndpoint("/sessions");
     try {
-      const response = await fetch(this.getEndpoint("/sessions"));
+      const response = await fetch(endpoint);
       if (response.ok) {
         return await response.json();
       }
-    } catch {
-      // Fallback
+    } catch (err) {
+      console.error("[Frontend SessionStorage Error] Failed to fetch session history:", err);
     }
-    return Array.from(this.localSessions.values());
+    return [];
   }
 
   async clearSessions(): Promise<void> {
+    const endpoint = this.getEndpoint("/sessions");
     try {
-      await fetch(this.getEndpoint("/sessions"), { method: "DELETE" });
-    } catch {
-      // Fallback
+      await fetch(endpoint, { method: "DELETE" });
+    } catch (err) {
+      console.error("[Frontend SessionStorage Error] Failed to clear sessions:", err);
     }
-    this.localSessions.clear();
   }
 }
 

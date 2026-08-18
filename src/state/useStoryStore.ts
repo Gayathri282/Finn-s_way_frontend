@@ -56,22 +56,35 @@ export const useStoryStore = create<StoryStoreState>((set, get) => ({
       choicePath: [],
       completedSession: null,
       buttonsPromptedAt: null,
+      sessionId: null,
+      childId: null,
     });
 
-    // 1. Create session on backend API
-    const sessionMeta = await sessionStorageService.createSession();
+    try {
+      // 1. Create session ONCE on backend API (Backend is single source of truth for sessionId)
+      const sessionMeta = await sessionStorageService.createSession();
+      console.log(`[useStoryStore] Initialized Story with Backend Session ID: "${sessionMeta.sessionId}"`);
 
-    // 2. Fetch scene graph
-    const allScenes = await sceneRepository.getAllScenes();
-    const initialScene = await sceneRepository.getInitialScene();
+      // 2. Fetch scene graph
+      const allScenes = await sceneRepository.getAllScenes();
+      const initialScene = await sceneRepository.getInitialScene();
 
-    set({
-      scenes: allScenes,
-      currentScene: initialScene,
-      playerState: "playing",
-      sessionId: sessionMeta.sessionId,
-      childId: sessionMeta.childId,
-    });
+      set({
+        scenes: allScenes,
+        currentScene: initialScene,
+        playerState: "playing",
+        sessionId: sessionMeta.sessionId,
+        childId: sessionMeta.childId,
+        errorMessage: null,
+      });
+    } catch (err) {
+      const errText = "Unable to connect to Finn's Way backend server to initialize session. Please ensure the backend server is running.";
+      console.error("[useStoryStore Error]", errText, err);
+      set({
+        playerState: "error",
+        errorMessage: errText,
+      });
+    }
   },
 
   onVideoEnd: () => {
@@ -98,6 +111,7 @@ export const useStoryStore = create<StoryStoreState>((set, get) => ({
           }
         } else {
           // autoNext is null -> end of content reached ("more story coming soon")
+          console.log(`[useStoryStore] Reached end of content (autoNext: null) for Session ID: "${sessionId}"`);
           if (sessionId) {
             sessionStorageService.getSessionResults(sessionId).then((record) => {
               set({ playerState: "completed", completedSession: record });
@@ -142,6 +156,7 @@ export const useStoryStore = create<StoryStoreState>((set, get) => ({
       decisionTimeSec,
     };
 
+    console.log(`[useStoryStore makeChoice] Session ID: "${sessionId}" -> Choice: "${choice.choiceId}" (${choice.label})`);
     const newPath = [...choicePath, choiceLog];
 
     if (sessionId) {
