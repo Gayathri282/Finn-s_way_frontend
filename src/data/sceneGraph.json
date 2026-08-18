@@ -1,0 +1,321 @@
+{
+  "scenes": [
+    {
+      "sceneId": "dep_01_wake",
+      "domain": "depression",
+      "title": "Finn Wakes Up in the Forest",
+      "description": "Finn the Fox stretches under the giant oak tree as morning light filters through the leaves. Birds are singing, but Finn feels a heavy quiet inside.",
+      "videoUrl": "/videos/dep_01_wake.mp4",
+      "characterMood": "curious",
+      "choices": [
+        {
+          "choiceId": "left_meadow",
+          "label": "Go toward the sunny meadow",
+          "nextSceneId": "dep_02_meadow",
+          "domain": "depression",
+          "scoreWeight": 0,
+          "position": "left",
+          "detailText": "Finn decides to step into the warm sunshine."
+        },
+        {
+          "choiceId": "right_rain",
+          "label": "Go toward the rainy path",
+          "nextSceneId": "dep_02_rain",
+          "domain": "depression",
+          "scoreWeight": 2,
+          "position": "right",
+          "detailText": "Finn drifts toward the shadowy mist under grey clouds."
+        }
+      ]
+    },
+    {
+      "sceneId": "dep_02_meadow",
+      "domain": "depression",
+      "title": "The Meadow & The Old Bridge",
+      "description": "In the meadow, bright golden wildflowers bloom. Finn hears laughter by the stream where squirrels are playing tag.",
+      "videoUrl": "/videos/dep_02_meadow.mp4",
+      "characterMood": "happy",
+      "choices": [
+        {
+          "choiceId": "join_squirrels",
+          "label": "Ask to join the game",
+          "nextSceneId": "anx_01_invite",
+          "domain": "self_concept",
+          "scoreWeight": 0,
+          "position": "left",
+          "detailText": "Finn runs over to join in the friendly game."
+        },
+        {
+          "choiceId": "sit_alone",
+          "label": "Watch quietly from far away",
+          "nextSceneId": "anx_01_invite",
+          "domain": "depression",
+          "scoreWeight": 2,
+          "position": "right",
+          "detailText": "Finn sits under a bush, feeling left out."
+        }
+      ]
+    },
+    {
+      "sceneId": "dep_02_rain",
+      "domain": "depression",
+      "title": "The Rainy Path & The Falling Leaves",
+      "description": "Soft rain patters on Finn's ears. Finn feels sluggish and wonders if anyone noticed he wandered off alone.",
+      "videoUrl": "/videos/dep_02_rain.mp4",
+      "characterMood": "sad",
+      "choices": [
+        {
+          "choiceId": "seek_shelter",
+          "label": "Look for a warm hollow log",
+          "nextSceneId": "anx_01_invite",
+          "domain": "anxiety",
+          "scoreWeight": 1,
+          "position": "left",
+          "detailText": "Finn tries to find cover from the rain."
+        },
+        {
+          "choiceId": "keep_walking_sad",
+          "label": "Keep walking slowly in rain",
+          "nextSceneId": "anx_01_invite",
+          "domain": "depression",
+          "scoreWeight": 3,
+          "position": "right",
+          "detailText": "Finn keeps wandering without picking a place to rest."
+        }
+      ]
+    },
+    {
+      "sceneId": "anx_01_invite",
+      "domain": "anxiety",
+      "title": "Friends Play Ball by the Meadow",
+      "description": "Two friendly animals kick a ball back and forth and look over at Finn. One of them rolls the ball toward Finn, waving for him to come play.",
+      "videoUrl": "/videos/anx_01_invite.mp4",
+      "characterMood": "anxious",
+      "choices": [
+        {
+          "choiceId": "join_game",
+          "label": "Join the game",
+          "nextSceneId": "anx_02_join",
+          "domain": "anxiety",
+          "scoreWeight": 0,
+          "position": "left",
+          "detailText": "Finn steps forward and kicks the ball back to join the fun."
+        },
+        {
+          "choiceId": "stay_back",
+          "label": "Stay back",
+          "nextSceneId": "anx_02_stay",
+          "domain": "anxiety",
+          "scoreWeight": 2,
+          "position": "right",
+          "detailText": "Finn steps back behind a tree, feeling hesitant."
+        }
+      ]
+    },
+    {
+      "sceneId": "anx_02_join",
+      "domain": "anxiety",
+      "title": "Playing Ball Together",
+      "description": "Finn passes the ball and everyone cheers! Finn feels warm inside after taking a brave step.",
+      "videoUrl": "/videos/anx_02_join.mp4",
+      "characterMood": "happy",
+      "choices": [
+        {
+          "choiceId": "continue_to_bridge_join",
+          "label": "Head toward the wooden bridge",
+          "nextSceneId": "anx_01_bridge",
+          "domain": "anxiety",
+          "scoreWeight": 0,
+          "position": "left",
+          "detailText": "Finn trots happily toward the river bridge."
+        }
+      ]
+    },
+    {
+      "sceneId": "anx_02_stay",
+      "domain": "anxiety",
+      "title": "Watching from the Shadows",
+      "description": "Finn watches the game from behind a tree, wishing he had joined but feeling too nervous to try.",
+      "videoUrl": "/videos/anx_02_stay.mp4",
+      "characterMood": "anxious",
+      "choices": [
+        {
+          "choiceId": "continue_to_bridge_stay",
+          "label": "Walk quietly toward the bridge",
+          "nextSceneId": "anx_01_bridge",
+          "domain": "anxiety",
+          "scoreWeight": 1,
+          "position": "right",
+          "detailText": "Finn quietly slips past toward the river bridge."
+        }
+      ]
+    },
+    {
+      "sceneId": "anx_01_bridge",
+      "domain": "anxiety",
+      "title": "Crossing the Wobbly Bridge",
+      "description": "Finn arrives at a wooden rope bridge stretching over a wide rushing river. The bridge sways gently in the breeze.",
+      "videoUrl": "/videos/anx_01_bridge.mp4",
+      "characterMood": "anxious",
+      "choices": [
+        {
+          "choiceId": "step_bravely",
+          "label": "Take one step at a time",
+          "nextSceneId": "ang_01_thistle",
+          "domain": "anxiety",
+          "scoreWeight": 0,
+          "position": "left",
+          "detailText": "Finn takes a deep breath and steps forward carefully."
+        },
+        {
+          "choiceId": "run_across_fast",
+          "label": "Dash across without looking!",
+          "nextSceneId": "ang_01_thistle",
+          "domain": "adhd_impulsivity",
+          "scoreWeight": 2,
+          "position": "center",
+          "detailText": "Finn runs fast without taking a moment to look."
+        },
+        {
+          "choiceId": "freeze_fear",
+          "label": "Stop and hide behind a boulder",
+          "nextSceneId": "ang_01_thistle",
+          "domain": "anxiety",
+          "scoreWeight": 3,
+          "position": "right",
+          "detailText": "Finn feels worried that the bridge might break."
+        }
+      ]
+    },
+    {
+      "sceneId": "ang_01_thistle",
+      "domain": "anger",
+      "title": "The Tangled Berry Patch",
+      "description": "On the other side of the bridge, tasty blackberries grow! But prickly thorns block the path and snag Finn's fur.",
+      "videoUrl": "/videos/ang_01_thistle.mp4",
+      "characterMood": "angry",
+      "choices": [
+        {
+          "choiceId": "stomp_angry",
+          "label": "Kick the thorny bushes in anger",
+          "nextSceneId": "disp_01_sign",
+          "domain": "anger",
+          "scoreWeight": 3,
+          "position": "left",
+          "detailText": "Finn gets mad and growls at the brambles."
+        },
+        {
+          "choiceId": "gently_untangle",
+          "label": "Ask a badger friend for help",
+          "nextSceneId": "disp_01_sign",
+          "domain": "self_concept",
+          "scoreWeight": 0,
+          "position": "center",
+          "detailText": "Finn asks nicely for a friend's help."
+        },
+        {
+          "choiceId": "find_detour",
+          "label": "Look for a path around the side",
+          "nextSceneId": "disp_01_sign",
+          "domain": "adhd_impulsivity",
+          "scoreWeight": 1,
+          "position": "right",
+          "detailText": "Finn stays calm and searches for a clear way."
+        }
+      ]
+    },
+    {
+      "sceneId": "disp_01_sign",
+      "domain": "disruptive_behavior",
+      "title": "The Forest Guard's Sign",
+      "description": "Finn finds a wooden sign placed by Owl the Forest Warden reading: 'DO NOT ENTER - SLEEPING BEAR AHEAD'.",
+      "videoUrl": "/videos/disp_01_sign.mp4",
+      "characterMood": "determined",
+      "choices": [
+        {
+          "choiceId": "follow_rule",
+          "label": "Follow the sign & take safe path",
+          "nextSceneId": "self_01_mirror",
+          "domain": "disruptive_behavior",
+          "scoreWeight": 0,
+          "position": "left",
+          "detailText": "Finn respects the forest rule and turns right."
+        },
+        {
+          "choiceId": "ignore_sign",
+          "label": "Sneak past the sign anyway!",
+          "nextSceneId": "self_01_mirror",
+          "domain": "disruptive_behavior",
+          "scoreWeight": 3,
+          "position": "right",
+          "detailText": "Finn decides to push past the rule just to see."
+        }
+      ]
+    },
+    {
+      "sceneId": "self_01_mirror",
+      "domain": "self_concept",
+      "title": "The Crystal Pond Reflection",
+      "description": "Finn sits beside a crystal clear pond. Gazing into the water, Finn sees his reflection surrounded by shimmering water lilies.",
+      "videoUrl": "/videos/self_01_mirror.mp4",
+      "characterMood": "curious",
+      "choices": [
+        {
+          "choiceId": "smile_reflection",
+          "label": "Smile and say 'I did a great job today!'",
+          "nextSceneId": "adhd_01_puzzle",
+          "domain": "self_concept",
+          "scoreWeight": 0,
+          "position": "left",
+          "detailText": "Finn feels proud of himself."
+        },
+        {
+          "choiceId": "frown_reflection",
+          "label": "Frown and think 'I am not good at this'",
+          "nextSceneId": "adhd_01_puzzle",
+          "domain": "self_concept",
+          "scoreWeight": 3,
+          "position": "right",
+          "detailText": "Finn feels self-critical and doubts his strength."
+        }
+      ]
+    },
+    {
+      "sceneId": "adhd_01_puzzle",
+      "domain": "adhd_impulsivity",
+      "title": "The Starry Clearing & Glowing Stones",
+      "description": "Finn arrives at the heart of the forest where ancient glowing stones form a magical puzzle path. A wise old Turtle asks Finn to wait until all 3 stones light up.",
+      "videoUrl": "/videos/adhd_01_puzzle.mp4",
+      "characterMood": "excited",
+      "choices": [
+        {
+          "choiceId": "wait_patiently",
+          "label": "Wait patiently for the 3rd stone",
+          "nextSceneId": "finale_dusk_home",
+          "domain": "adhd_impulsivity",
+          "scoreWeight": 0,
+          "position": "left",
+          "detailText": "Finn counts to three and waits for the signal."
+        },
+        {
+          "choiceId": "jump_early",
+          "label": "Leap onto the stones immediately!",
+          "nextSceneId": "finale_dusk_home",
+          "domain": "adhd_impulsivity",
+          "scoreWeight": 3,
+          "position": "right",
+          "detailText": "Finn gets excited and jumps without waiting."
+        }
+      ]
+    },
+    {
+      "sceneId": "finale_dusk_home",
+      "domain": "self_concept",
+      "title": "Cozy Evening at the Fox Cozy Den",
+      "description": "The golden sun sets over the forest as Finn returns safely home to the warm cozy den. Finn curls up happily after a wonderful day of adventure.",
+      "videoUrl": "/videos/finale_dusk_home.mp4",
+      "characterMood": "happy",
+      "choices": []
+    }
+  ]
+}

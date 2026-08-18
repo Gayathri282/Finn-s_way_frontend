@@ -1,5 +1,6 @@
 import type { Scene } from "../types/screening";
 import { validateSceneGraph } from "../utils/graphValidator";
+import fallbackSceneData from "../data/sceneGraph.json";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
@@ -17,21 +18,28 @@ class ApiSceneRepository implements ISceneRepository {
       return this.scenesCache;
     }
 
+    // 1. Try fetching from backend API if configured
     try {
       const endpoint = `${API_BASE_URL.replace(/\/$/, "")}/scene-graph`;
       const response = await fetch(endpoint);
       if (response.ok) {
         const data = await response.json();
-        const scenes = data.scenes || [];
-        validateSceneGraph(scenes);
-        this.scenesCache = scenes;
-        return scenes;
+        const scenes = (data.scenes || []) as Scene[];
+        if (scenes.length > 0) {
+          validateSceneGraph(scenes);
+          this.scenesCache = scenes;
+          return scenes;
+        }
       }
     } catch (err) {
-      console.warn("Failed to fetch scene graph from backend API:", err);
+      console.warn("Backend API unreachable. Falling back to embedded scene graph:", err);
     }
 
-    return [];
+    // 2. Fallback to embedded static scene graph for Vercel / GitHub Pages static deployments
+    const fallbackScenes = (fallbackSceneData.scenes || []) as Scene[];
+    validateSceneGraph(fallbackScenes);
+    this.scenesCache = fallbackScenes;
+    return fallbackScenes;
   }
 
   async getSceneById(sceneId: string): Promise<Scene | null> {
