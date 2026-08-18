@@ -102,6 +102,10 @@ export type ChoiceLog = {
   domain: DomainKey;
   scoreWeight: number;
   timestamp: string;
+  promptedAt?: string;
+  decidedAt?: string;
+  decisionTimeMs?: number;
+  decisionTimeSec?: string;
 };
 
 export type DomainBand = "typical" | "worth_watching" | "talk_to_professional";

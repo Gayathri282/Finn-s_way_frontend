@@ -15,6 +15,7 @@ interface StoryStoreState {
   sessionId: string | null;
   childId: string | null;
   completedSession: SessionRecord | null;
+  buttonsPromptedAt: string | null;
 
   // Audio / Sound toggle
   isMuted: boolean;
@@ -43,14 +44,21 @@ export const useStoryStore = create<StoryStoreState>((set, get) => ({
   sessionId: null,
   childId: null,
   completedSession: null,
+  buttonsPromptedAt: null,
   isMuted: false,
   isParentAuthenticated: false,
   userRole: null,
 
   initStory: async () => {
-    set({ playerState: "loading", errorMessage: null, choicePath: [], completedSession: null });
+    set({
+      playerState: "loading",
+      errorMessage: null,
+      choicePath: [],
+      completedSession: null,
+      buttonsPromptedAt: null,
+    });
 
-    // 1. Create session
+    // 1. Create session on backend API
     const sessionMeta = await sessionStorageService.createSession();
 
     // 2. Fetch scene graph
@@ -81,6 +89,7 @@ export const useStoryStore = create<StoryStoreState>((set, get) => ({
               currentScene: nextScene,
               playerState: "playing",
               errorMessage: null,
+              buttonsPromptedAt: null,
             });
           } else {
             const errText = `[Story Engine Error] Missing autoNext scene ID "${currentScene.autoNext}" in scene "${currentScene.sceneId}".`;
@@ -98,8 +107,12 @@ export const useStoryStore = create<StoryStoreState>((set, get) => ({
           }
         }
       } else if (currentScene.choices && currentScene.choices.length > 0) {
-        // 2. choices array is present -> show choice buttons
-        set({ playerState: "choice_pending" });
+        // 2. choices array is present -> show choice buttons and record promptedAt timestamp!
+        const nowIso = new Date().toISOString();
+        set({
+          playerState: "choice_pending",
+          buttonsPromptedAt: nowIso,
+        });
       } else {
         // 3. Fallback end of content
         set({ playerState: "completed" });
@@ -108,8 +121,13 @@ export const useStoryStore = create<StoryStoreState>((set, get) => ({
   },
 
   makeChoice: async (choice: Choice) => {
-    const { currentScene, choicePath, scenes, sessionId } = get();
+    const { currentScene, choicePath, scenes, sessionId, buttonsPromptedAt } = get();
     if (!currentScene) return;
+
+    const decidedAt = new Date().toISOString();
+    const promptedAt = buttonsPromptedAt || decidedAt;
+    const decisionTimeMs = Math.max(0, new Date(decidedAt).getTime() - new Date(promptedAt).getTime());
+    const decisionTimeSec = (decisionTimeMs / 1000).toFixed(1);
 
     const choiceLog: ChoiceLog = {
       sceneId: currentScene.sceneId,
@@ -117,7 +135,11 @@ export const useStoryStore = create<StoryStoreState>((set, get) => ({
       choiceLabel: choice.label,
       domain: choice.domain,
       scoreWeight: choice.scoreWeight,
-      timestamp: new Date().toISOString(),
+      timestamp: decidedAt,
+      promptedAt,
+      decidedAt,
+      decisionTimeMs,
+      decisionTimeSec,
     };
 
     const newPath = [...choicePath, choiceLog];
@@ -141,6 +163,7 @@ export const useStoryStore = create<StoryStoreState>((set, get) => ({
         choicePath: newPath,
         playerState: "playing",
         errorMessage: null,
+        buttonsPromptedAt: null,
       });
     } else {
       let record: SessionRecord | null = null;
@@ -152,6 +175,7 @@ export const useStoryStore = create<StoryStoreState>((set, get) => ({
         playerState: "completed",
         completedSession: record,
         errorMessage: null,
+        buttonsPromptedAt: null,
       });
     }
   },

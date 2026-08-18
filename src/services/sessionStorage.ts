@@ -21,7 +21,7 @@ function getBandForPercentage(percentage: number) {
   return "talk_to_professional" as const;
 }
 
-function computeDomainResult(_domain: DomainKey, rawScore: number, maxScore: number = 6): DomainScoreResult {
+function computeDomainResult(rawScore: number, maxScore: number = 6): DomainScoreResult {
   const rawPercentage = Math.round((rawScore / maxScore) * 100);
   const normalizedPercentage = Math.min(100, Math.max(0, rawPercentage));
   const band = getBandForPercentage(normalizedPercentage);
@@ -64,7 +64,7 @@ class ApiSessionStorageService implements ISessionStorageService {
         return { sessionId: data.sessionId, childId: data.childId };
       }
     } catch {
-      // Backend unready -> use local in-memory fallback
+      // Fallback
     }
 
     const sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
@@ -90,7 +90,7 @@ class ApiSessionStorageService implements ISessionStorageService {
       });
       if (response.ok) return;
     } catch {
-      // Fallback to local session store
+      // Fallback
     }
 
     let record = this.localSessions.get(sessionId);
@@ -126,30 +126,24 @@ class ApiSessionStorageService implements ISessionStorageService {
     const record = this.localSessions.get(sessionId);
     if (!record) return null;
 
-    const rawTotals: Record<DomainKey, number> = {
-      depression: 0,
-      anxiety: 0,
-      anger: 0,
-      disruptive_behavior: 0,
-      self_concept: 0,
-      adhd_impulsivity: 0,
-    };
-
+    const choicesByDomain: Record<string, ChoiceLog[]> = {};
     record.path.forEach((choice) => {
-      if (rawTotals[choice.domain] !== undefined) {
-        rawTotals[choice.domain] += choice.scoreWeight;
+      if (!choicesByDomain[choice.domain]) {
+        choicesByDomain[choice.domain] = [];
+      }
+      choicesByDomain[choice.domain].push(choice);
+    });
+
+    const domainScores: Partial<Record<DomainKey, DomainScoreResult>> = {};
+    Object.keys(choicesByDomain).forEach((dKey) => {
+      const choicesList = choicesByDomain[dKey];
+      if (choicesList && choicesList.length > 0) {
+        const rawScore = choicesList.reduce((sum, c) => sum + Number(c.scoreWeight || 0), 0);
+        domainScores[dKey as DomainKey] = computeDomainResult(rawScore, 6);
       }
     });
 
-    record.domainScores = {
-      depression: computeDomainResult("depression", rawTotals.depression, 6),
-      anxiety: computeDomainResult("anxiety", rawTotals.anxiety, 6),
-      anger: computeDomainResult("anger", rawTotals.anger, 6),
-      disruptive_behavior: computeDomainResult("disruptive_behavior", rawTotals.disruptive_behavior, 6),
-      self_concept: computeDomainResult("self_concept", rawTotals.self_concept, 6),
-      adhd_impulsivity: computeDomainResult("adhd_impulsivity", rawTotals.adhd_impulsivity, 6),
-    };
-
+    record.domainScores = domainScores as Record<DomainKey, DomainScoreResult>;
     if (!record.completedAt) {
       record.completedAt = new Date().toISOString();
     }

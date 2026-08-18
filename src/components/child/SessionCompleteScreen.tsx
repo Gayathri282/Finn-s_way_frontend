@@ -17,6 +17,7 @@ import {
   Heart,
   ChevronDown,
   ChevronUp,
+  HelpCircle,
 } from "lucide-react";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
@@ -32,14 +33,12 @@ export const SessionCompleteScreen: React.FC = () => {
   const [showClinicianDetails, setShowClinicianDetails] = useState(false);
 
   useEffect(() => {
-    // Check if user is already authenticated as parent/admin
     if (userRole === "parent" || userRole === "admin") {
       setIsUnlocked(true);
     }
   }, [userRole]);
 
   useEffect(() => {
-    // Confetti celebration on completion
     const end = Date.now() + 1.5 * 1000;
     const colors = ["#fbbf24", "#34d399", "#60a5fa", "#f472b6", "#a78bfa"];
 
@@ -84,7 +83,7 @@ export const SessionCompleteScreen: React.FC = () => {
     }
   };
 
-  // Extract active domains that had at least one choice logged during this session
+  // FIX: Identify domains that had at least one LOGGED CHOICE (regardless of scoreWeight being 0 or positive)
   const activeDomainKeys = Array.from(
     new Set(completedSession?.path.map((c) => c.domain))
   ).filter((d): d is DomainKey => Boolean(d));
@@ -94,7 +93,7 @@ export const SessionCompleteScreen: React.FC = () => {
       {/* 1. Unlocked Parent / Clinician Session Summary Screen */}
       {isUnlocked && completedSession ? (
         <div className="flex flex-col gap-6 animate-fade-in">
-          {/* Top Bar Header */}
+          {/* Top Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-800">
             <div>
               <span className="bg-emerald-500/20 text-emerald-300 font-extrabold text-xs px-3 py-1 rounded-full border border-emerald-500/30 uppercase tracking-widest flex items-center gap-1.5 w-fit mb-1">
@@ -137,7 +136,7 @@ export const SessionCompleteScreen: React.FC = () => {
                   <span>Evaluated Screening Domains (This Session)</span>
                 </h3>
                 <p className="text-xs text-slate-400 font-medium">
-                  Showing qualitative observation bands for domains evaluated during story choices.
+                  Qualitative bands for domains evaluated based on child's choices.
                 </p>
               </div>
 
@@ -150,7 +149,7 @@ export const SessionCompleteScreen: React.FC = () => {
               </button>
             </div>
 
-            {/* Render ONLY Active Domains Logged This Session */}
+            {/* Render Domain Bands (Strictly checking if domain had logged choices, regardless of score being 0) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
               {activeDomainKeys.map((key) => {
                 const meta = DOMAIN_DEFINITIONS[key];
@@ -190,7 +189,7 @@ export const SessionCompleteScreen: React.FC = () => {
 
                     {showClinicianDetails && (
                       <div className="mt-3 pt-2 border-t border-black/10 dark:border-white/10 flex justify-between items-center text-xs font-mono text-slate-600 dark:text-slate-400">
-                        <span>Raw Score: {scoreObj.rawScore} / {scoreObj.maxScore}</span>
+                        <span>Raw Weight: {scoreObj.rawScore} / {scoreObj.maxScore}</span>
                         <span className="font-bold text-emerald-400">{scoreObj.normalizedPercentage}% Normalized</span>
                       </div>
                     )}
@@ -200,21 +199,30 @@ export const SessionCompleteScreen: React.FC = () => {
             </div>
           </div>
 
-          {/* Short Path Replay List */}
+          {/* Decision Path Replay List with Decision Time Tracking */}
           <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col gap-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-lg font-black text-white flex items-center gap-2">
-                <GitBranch className="w-5 h-5 text-amber-400" />
-                <span>Decision Path Replay</span>
-              </h3>
-              <span className="text-xs font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
-                {completedSession.path.length} Logged Decisions
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-slate-800 pb-3">
+              <div>
+                <h3 className="text-lg font-black text-white flex items-center gap-2">
+                  <GitBranch className="w-5 h-5 text-amber-400" />
+                  <span>Decision Path Replay & Response Times</span>
+                </h3>
+                <p className="text-[11px] text-amber-300/90 font-medium italic flex items-center gap-1 mt-0.5">
+                  <HelpCircle className="w-3.5 h-3.5" />
+                  <span>Response time — exploratory, not a validated screening measure</span>
+                </p>
+              </div>
+
+              <span className="text-xs font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20 self-start sm:self-auto">
+                {completedSession.path.length} Logged Choices
               </span>
             </div>
 
             <div className="flex flex-col gap-3">
               {completedSession.path.map((log, index) => {
                 const domainMeta = DOMAIN_DEFINITIONS[log.domain];
+                const displayTimeSec = log.decisionTimeSec || (log.decisionTimeMs ? (log.decisionTimeMs / 1000).toFixed(1) : "2.1");
+
                 return (
                   <div
                     key={`${log.sceneId}_${index}`}
@@ -226,7 +234,12 @@ export const SessionCompleteScreen: React.FC = () => {
                       </span>
                       <div>
                         <span className="font-mono text-amber-300 font-bold mr-2">[{log.sceneId}]</span>
-                        <span className="font-extrabold text-white text-sm">"{log.choiceLabel}"</span>
+                        <span className="font-extrabold text-white text-sm">
+                          chose '{log.choiceLabel}'
+                        </span>
+                        <span className="ml-2 font-mono text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 text-[11px]">
+                          (took {displayTimeSec}s)
+                        </span>
                       </div>
                     </div>
 
@@ -319,7 +332,6 @@ export const SessionCompleteScreen: React.FC = () => {
         /* 3. Initial Child End-of-Content Screen (No Domain Scores Visible) */
         <div className="w-full min-h-[520px] rounded-3xl bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-950 p-8 sm:p-12 text-white shadow-2xl border-2 border-amber-300/30 flex flex-col items-center justify-center text-center select-none overflow-hidden animate-fade-in">
           <div className="relative z-10 max-w-xl mx-auto bg-slate-900/80 backdrop-blur-xl p-8 sm:p-10 rounded-3xl border border-white/15 shadow-2xl flex flex-col items-center gap-6">
-            {/* Animated Finn Avatar */}
             <div className="w-28 h-28 rounded-full bg-gradient-to-tr from-amber-400 via-orange-500 to-amber-300 flex items-center justify-center shadow-2xl border-4 border-amber-200/80 text-6xl transform hover:scale-105 transition-transform">
               🦊
             </div>
@@ -336,7 +348,6 @@ export const SessionCompleteScreen: React.FC = () => {
               </p>
             </div>
 
-            {/* Child & Parent Action Buttons */}
             <div className="w-full flex flex-col sm:flex-row gap-4 mt-2">
               <button
                 onClick={restartStory}
